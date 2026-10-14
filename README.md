@@ -1,54 +1,118 @@
-# Debate Crew
+# Debate Crew — Multi-Agent AI Debate
 
-Welcome to the Debate Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+A multi-agent debate application built with **CrewAI**. It takes a motion, generates arguments for and against it, and then asks a separate judge agent to evaluate both sides and decide which argument is more convincing.
 
-## Installation
+The current example debates the motion:
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+> There needs to be strict laws to regulate LLMs.
 
-First, if you haven't already, install uv:
+## How It Works
 
-```bash
-pip install uv
+The crew executes three tasks sequentially:
+
+1. **Propose:** The debater agent creates an argument supporting the motion.
+2. **Oppose:** The debater agent creates an argument opposing the motion.
+3. **Decide:** The judge evaluates both arguments, selects the more convincing side, and explains its decision.
+
+```mermaid
+flowchart TD
+    A[Debate Motion] --> B[Propose Argument]
+    B --> C[Oppose Argument]
+    C --> D[Judge Evaluates Both Sides]
+    D --> E[Final Decision and Reasoning]
 ```
 
-Next, navigate to your project directory and install the dependencies:
+## Agents and Models
 
-(Optional) Lock the dependencies and install them by using the CLI command:
+| Agent | Responsibility | Model |
+|---|---|---|
+| Debater | Creates arguments for and against the motion | `deepseek-v4-flash` |
+| Judge | Evaluates the arguments and chooses the stronger position | `gemini-3.5-flash-lite` |
+
+Both models are configured through the MixRoute API endpoint in `src/debate/crew.py`.
+
+The crew uses CrewAI's sequential process, so each task runs in the order defined in `src/debate/config/tasks.yaml`.
+
+**Note:** The same debater agent is reused for the proposing and opposing tasks. They are separate tasks, not separate debater agents.
+
+## Tech Stack
+
+- **Python:** `>=3.10,<3.14`
+- **CrewAI:** `1.14.4`
+- **uv:** Python package and environment management
+- **MixRoute:** LLM API access
+- **YAML:** Agent and task configuration
+
+## Getting Started
+
+### Prerequisites
+
+Install Python 3.10–3.13 and [uv](https://docs.astral.sh/uv/).
+
+### 1. Clone the repository
+
 ```bash
-crewai install
+git clone <your-repository-url>
+cd crewai-debate
 ```
-### Customizing
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+Replace the repository URL and directory name with your actual GitHub repository details.
 
-- Modify `src/debate/config/agents.yaml` to define your agents
-- Modify `src/debate/config/tasks.yaml` to define your tasks
-- Modify `src/debate/crew.py` to add your own logic, tools and specific args
-- Modify `src/debate/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
+### 2. Install dependencies
 
 ```bash
-$ crewai run
+uv sync
 ```
 
-This command initializes the debate Crew, assembling the agents and assigning them tasks as defined in your configuration.
+### 3. Configure environment variables
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+Create a `.env` file in the project root:
 
-## Understanding Your Crew
+```env
+MIXROUTE_API_KEY=your_mixroute_api_key
+```
 
-The debate Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+Replace the placeholder with your MixRoute API key. Keep this key private and never commit your `.env` file to GitHub.
 
-## Support
+### 4. Run the debate
 
-For support, questions, or feedback regarding the Debate Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+```bash
+uv run run_crew
+```
 
-Let's create wonders together with the power and simplicity of crewAI.
+The application starts from `src/debate/main.py` and prints the final result to the terminal.
+
+## Example Debate Motion
+
+The current motion is defined in `src/debate/main.py`:
+
+```python
+inputs = {
+    "motion": "There needs to be strict laws to regulate LLMs"
+}
+```
+
+To debate another topic, replace the value of `motion` with your preferred statement.
+
+For example:
+
+```python
+inputs = {
+    "motion": "Artificial intelligence will create more jobs than it eliminates"
+}
+```
+
+Run the application again to generate arguments for and against the new motion.
+
+## Output Files
+
+The crew saves the results of its tasks to Markdown files:
+
+| File | Description |
+|---|---|
+| `output/propose.md` | Argument supporting the motion |
+| `output/oppose.md` | Argument opposing the motion |
+| `output/decide.md` | Judge's decision and explanation |
+
+The final crew result is also printed through `result.raw`.
+
